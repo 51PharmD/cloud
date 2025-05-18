@@ -77,54 +77,69 @@ class TagsCloud {
     document.addEventListener('touchmove', this.#onTouchMove.bind(this), { passive: true });
   }
 
-  #updatePositions() {
-    const sin = Math.sin(this.#rotationAngle);
-    const cos = Math.cos(this.#rotationAngle);
-    const ux = this.#rotationAxis[0];
-    const uy = this.#rotationAxis[1];
-    const uz = this.#rotationAxis[2];
+ #updatePositions() {
+  const sin = Math.sin(this.#rotationAngle);
+  const cos = Math.cos(this.#rotationAngle);
+  const ux = this.#rotationAxis[0];
+  const uy = this.#rotationAxis[1];
+  const uz = this.#rotationAxis[2];
 
-    const rotationMatrix = [
-      [
-        cos + ux ** 2 * (1 - cos),
-        ux * uy * (1 - cos) - uz * sin,
-        ux * uz * (1 - cos) + uy * sin,
-      ],
-      [
-        uy * ux * (1 - cos) + uz * sin,
-        cos + uy ** 2 * (1 - cos),
-        uy * uz * (1 - cos) - ux * sin,
-      ],
-      [
-        uz * ux * (1 - cos) - uy * sin,
-        uz * uy * (1 - cos) + ux * sin,
-        cos + uz ** 2 * (1 - cos),
-      ],
-    ];
+  const rotationMatrix = [
+    [
+      cos + ux ** 2 * (1 - cos),
+      ux * uy * (1 - cos) - uz * sin,
+      ux * uz * (1 - cos) + uy * sin,
+    ],
+    [
+      uy * ux * (1 - cos) + uz * sin,
+      cos + uy ** 2 * (1 - cos),
+      uy * uz * (1 - cos) - ux * sin,
+    ],
+    [
+      uz * ux * (1 - cos) - uy * sin,
+      uz * uy * (1 - cos) + ux * sin,
+      cos + uz ** 2 * (1 - cos),
+    ],
+  ];
 
-    const N = this.#tags.length;
+  const N = this.#tags.length;
+  const containerWidth = this.#root.offsetWidth;
+  const containerHeight = this.#root.offsetHeight;
 
-    for (let i = 0; i < N; i++) {
-      const [x, y, z] = this.#sphere.points[i];
-      
-      const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
-      const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
-      const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
+  for (let i = 0; i < N; i++) {
+    const [x, y, z] = this.#sphere.points[i];
+    
+    // Original transformation calculations
+    const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
+    const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
+    const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
 
-      const translateX = (this.#size * transformedX) * 0.4;
-      const translateY = (this.#size * transformedY) * 0.4;
-      
-      const depthScale = (transformedZ + 2) / 3;
-      const lengthScale = parseFloat(this.#tags[i].dataset.size);
-      const combinedScale = depthScale * lengthScale;
-      
-      const opacity = (transformedZ + 1.5) / 2.5;
-      const transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
+    // Original translation calculations
+    let translateX = (this.#size * transformedX) * 0.35;
+    let translateY = (this.#size * transformedY) * 0.35;
 
-      this.#tags[i].style.transform = transform;
-      this.#tags[i].style.opacity = opacity;
-    }
+    // New bounds checking (inserted in correct sequence)
+    const tagRect = this.#tags[i].getBoundingClientRect();
+    const maxX = (containerWidth - tagRect.width) / 2;
+    const maxY = (containerHeight - tagRect.height) / 2;
+    
+    translateX = Math.max(-maxX, Math.min(translateX, maxX));
+    translateY = Math.max(-maxY, Math.min(translateY, maxY));
+
+    // Original scaling and opacity calculations
+    const depthScale = (transformedZ + 2) / 3;
+    const lengthScale = parseFloat(this.#tags[i].dataset.size);
+    const combinedScale = depthScale * lengthScale;
+    const opacity = (transformedZ + 1.5) / 2.5;
+
+    // Preserve original transform construction
+    const transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
+
+    // Original style updates
+    this.#tags[i].style.transform = transform;
+    this.#tags[i].style.opacity = opacity;
   }
+}
 
   #onMouseMove(e) {
     this.#autoRotate = false;
