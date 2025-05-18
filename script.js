@@ -50,7 +50,7 @@ class TagsCloud {
   }
 
   #updateSize() {
-    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.9;
+    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.8;
   }
 
   #normalizeFontSizes() {
@@ -107,6 +107,8 @@ class TagsCloud {
     const N = this.#tags.length;
     const containerWidth = this.#root.offsetWidth;
     const containerHeight = this.#root.offsetHeight;
+    const containerCenterX = containerWidth / 2;
+    const containerCenterY = containerHeight / 2;
 
     for (let i = 0; i < N; i++) {
       const [x, y, z] = this.#sphere.points[i];
@@ -119,19 +121,20 @@ class TagsCloud {
       let translateY = (this.#size * transformedY) * 0.35;
 
       const tagRect = this.#tags[i].getBoundingClientRect();
-      const maxX = (containerWidth - tagRect.width) / 2;
-      const maxY = (containerHeight - tagRect.height) / 2;
+      const rootRect = this.#root.getBoundingClientRect();
       
-      translateX = Math.max(-maxX, Math.min(translateX, maxX));
-      translateY = Math.max(-maxY, Math.min(translateY, maxY));
+      const maxX = containerCenterX - (tagRect.width / 2);
+      const maxY = containerCenterY - (tagRect.height / 2);
+
+      translateX = Math.max(-maxX, Math.min(translateX, maxX)) + containerCenterX;
+      translateY = Math.max(-maxY, Math.min(translateY, maxY)) + containerCenterY;
 
       const depthScale = (transformedZ + 2) / 3;
       const lengthScale = parseFloat(this.#tags[i].dataset.size);
       const combinedScale = depthScale * lengthScale;
       const opacity = (transformedZ + 1.5) / 2.5;
 
-      this.#tags[i].style.transform = 
-        `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
+      this.#tags[i].style.transform = `translate(${translateX}px, ${translateY}px) scale(${combinedScale})`;
       this.#tags[i].style.opacity = opacity;
     }
   }
@@ -141,8 +144,12 @@ class TagsCloud {
     this.#idleTime = 0;
     
     const rootRect = this.#root.getBoundingClientRect();
-    const deltaX = e.clientX - (rootRect.left + this.#root.offsetWidth / 2);
-    const deltaY = e.clientY - (rootRect.top + this.#root.offsetHeight / 2);
+    const containerCenterX = this.#root.offsetWidth / 2;
+    const containerCenterY = this.#root.offsetHeight / 2;
+    
+    const deltaX = e.clientX - (rootRect.left + containerCenterX);
+    const deltaY = e.clientY - (rootRect.top + containerCenterY);
+    
     const a = Math.atan2(deltaX, deltaY) - Math.PI / 2;
     const axis = [Math.sin(a), Math.cos(a), 0];
     const delta = Math.sqrt(deltaX ** 2 + deltaY ** 2);
@@ -158,8 +165,12 @@ class TagsCloud {
     
     const touch = e.touches[0];
     const rootRect = this.#root.getBoundingClientRect();
-    const deltaX = touch.clientX - (rootRect.left + this.#root.offsetWidth / 2);
-    const deltaY = touch.clientY - (rootRect.top + this.#root.offsetHeight / 2);
+    const containerCenterX = this.#root.offsetWidth / 2;
+    const containerCenterY = this.#root.offsetHeight / 2;
+    
+    const deltaX = touch.clientX - (rootRect.left + containerCenterX);
+    const deltaY = touch.clientY - (rootRect.top + containerCenterY);
+    
     const a = Math.atan2(deltaX, deltaY) - Math.PI / 2;
     const axis = [Math.sin(a), Math.cos(a), 0];
     const delta = Math.sqrt(deltaX ** 2 + deltaY ** 2);
