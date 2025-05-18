@@ -186,13 +186,3 @@ body {
   50% { transform: translateX(50%) translateY(10%); }
   100% { transform: translateX(-50%) translateY(-10%); }
 }
-
-@media (max-aspect-ratio: 1/1) {
-  .tags .tag {
-    font-size: calc(3vw + 2vh);
-  }
-  .tags {
-    width: 98%;
-    height: 98%;
-  }
-}
