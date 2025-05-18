@@ -193,34 +193,99 @@ class TagsCloud {
   }
 }
 
-const interBubble = document.querySelector('.interactive');
-let curX = 0;
-let curY = 0;
-let tgX = 0;
-let tgY = 0;
-
-function moveBubble() {
-  curX += (tgX - curX) / 20;
-  curY += (tgY - curY) / 20;
-  interBubble.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`;
-  requestAnimationFrame(moveBubble);
+// Google Sheets integration functions
+async function fetchHtmlContent(pubhtmlUrl) {
+  const urlWithTimestamp = `${pubhtmlUrl}?t=${new Date().getTime()}`;
+  const response = await fetch(urlWithTimestamp);
+  return await response.text();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const cloud = new TagsCloud(document.querySelector('.tags'));
-  cloud.start();
+function parseMessagesForCloud(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const rows = doc.querySelectorAll('table tr');
+  
+  return Array.from(rows).slice(1).map(row => {
+    const cells = row.querySelectorAll('td');
+    return {
+      message: cells[1]?.innerText.trim() || ''
+    };
+  });
+}
 
-  const handlePointerMove = (e) => {
-    const clientX = e.clientX || (e.touches?.[0]?.clientX);
-    const clientY = e.clientY || (e.touches?.[0]?.clientY);
-    if (clientX && clientY) {
-      tgX = clientX;
-      tgY = clientY;
+function extractCloudWords(messages) {
+  const cloudWords = [];
+  const seenWords = new Set();
+  
+  messages.forEach(entry => {
+    if (entry.message.startsWith('☁') && entry.message.length > 2) {
+      const cleanMessage = entry.message
+        .replace(/^☁\s*/, '')
+        .replace(/[^\w\s\u0600-\u06FF]/gi, '')
+        .trim();
+      
+      if (cleanMessage && !seenWords.has(cleanMessage)) {
+        cloudWords.push(cleanMessage);
+        seenWords.add(cleanMessage);
+      }
     }
-  };
+  });
+  
+  return cloudWords;
+}
 
-  window.addEventListener('mousemove', handlePointerMove);
-  window.addEventListener('touchmove', handlePointerMove, { passive: true });
+// Initialization code
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Fetch data from Google Sheet
+    const pubhtmlUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQazrkD8DxsLDMhQ4X78vjlIjq1wos7C-0dge7NDG0EBkJ7jhePsJYXCGUvMV79GaNcAa1hJYS_M-5Z/pubhtml';
+    const html = await fetchHtmlContent(pubhtmlUrl);
+    const messages = parseMessagesForCloud(html);
+    const cloudWords = extractCloudWords(messages);
 
-  moveBubble();
+    // Get the tags container
+    const tagsUl = document.querySelector('.tags');
+
+    // Add new words from Google Sheet
+    cloudWords.forEach(word => {
+      const li = document.createElement('li');
+      li.className = 'tag';
+      li.innerHTML = `<span class="box">${word}</span>`;
+      tagsUl.appendChild(li);
+    });
+
+    // Initialize cloud with all tags
+    const cloud = new TagsCloud(tagsUl);
+    cloud.start();
+
+    // Interactive bubble code
+    const interBubble = document.querySelector('.interactive');
+    let curX = 0;
+    let curY = 0;
+    let tgX = 0;
+    let tgY = 0;
+
+    function moveBubble() {
+      curX += (tgX - curX) / 20;
+      curY += (tgY - curY) / 20;
+      interBubble.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`;
+      requestAnimationFrame(moveBubble);
+    }
+
+    const handlePointerMove = (e) => {
+      const clientX = e.clientX || (e.touches?.[0]?.clientX);
+      const clientY = e.clientY || (e.touches?.[0]?.clientY);
+      if (clientX && clientY) {
+        tgX = clientX;
+        tgY = clientY;
+      }
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('touchmove', handlePointerMove, { passive: true });
+    moveBubble();
+
+  } catch (error) {
+    console.error('Error initializing cloud:', error);
+  }
 });
