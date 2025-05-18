@@ -111,8 +111,8 @@ class TagsCloud {
       const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
       const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
 
-      const translateX = (this.#size * transformedX) * 0.45;
-      const translateY = (this.#size * transformedY) * 0.45;
+      const translateX = (this.#size * transformedX) * 0.4;
+      const translateY = (this.#size * transformedY) * 0.4;
       
       const depthScale = (transformedZ + 2) / 3;
       const lengthScale = parseFloat(this.#tags[i].dataset.size);
