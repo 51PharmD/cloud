@@ -50,7 +50,7 @@ class TagsCloud {
   }
 
   #updateSize() {
-    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.9;
+    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.95;
   }
 
   #normalizeFontSizes() {
