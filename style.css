@@ -28,29 +28,21 @@ html, body {
 body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(40deg, var(--color-bg1), var(--color-bg2));
-  color: #000;
+  color: #fff;
 }
 
-.container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Word Cloud Styles */
+/* Modified Word Cloud Container */
 .tags {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 90%;
-  height: 90%;
+  width: 70vmin;
+  height: 70vmin;
   transform: translate(-50%, -50%);
   list-style: none;
   opacity: 0;
   user-select: none;
   z-index: 2;
-  contain: strict;
 }
 
 .tags.-loaded {
@@ -61,18 +53,20 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  font-size: calc(2vw + 2vh);
+  font-size: 5vmin;
   font-weight: bold;
   transition: transform 0.5s linear, opacity 0.5s linear;
   z-index: 3;
-  transform-origin: center center;
-  will-change: transform;
+  color: #fff;
 }
 
 .tag > .box {
   display: inline-block;
   transform: translateX(-50%) translateY(-50%);
   white-space: nowrap;
+  max-width: 30vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes fadeIn {
@@ -80,7 +74,7 @@ body {
   to { opacity: 1; }
 }
 
-/* Gradient Background Styles */
+/* Gradient Background */
 .gradient-bg {
   position: absolute;
   width: 100%;
@@ -114,7 +108,6 @@ body {
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
   opacity: 1;
-  will-change: transform;
 }
 
 .g1 {
@@ -161,7 +154,6 @@ body {
   top: -50%;
   left: -50%;
   opacity: 0.7;
-  will-change: transform;
 }
 
 @keyframes moveInCircle {
