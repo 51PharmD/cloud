@@ -41,20 +41,25 @@ body {
   justify-content: center;
   align-items: center;
   pointer-events: none;
+  perspective: 1000px;
+  transform-style: preserve-3d;
 }
 
 .tags {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 95%;
   height: 95%;
+  transform: translate(-50%, -50%);
   list-style: none;
   opacity: 0;
   user-select: none;
   z-index: 2;
   contain: strict;
   transform-style: preserve-3d;
-  perspective: 1000px;
   margin: 0 auto;
+  overflow: visible;
 }
 
 .tags.-loaded {
@@ -63,10 +68,10 @@ body {
 
 .tags .tag {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   font-weight: bold;
-  transition: transform 0.5s linear, opacity 0.5s linear;
+  transition: transform 0.5s cubic-bezier(0.17, 0.67, 0.35, 0.97), opacity 0.5s linear;
   z-index: 3;
   transform-origin: center center;
   will-change: transform;
@@ -78,7 +83,7 @@ body {
 .tag > .box {
   display: inline-block;
   white-space: nowrap;
-  transform: translateX(-50%) translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 
 @keyframes fadeIn {
