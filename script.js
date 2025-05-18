@@ -50,17 +50,19 @@ class TagsCloud {
   }
 
   #updateSize() {
-    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.95;
+    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight) * 0.9;
   }
 
   #normalizeFontSizes() {
     const tags = Array.from(this.#tags);
     const lengths = tags.map(tag => tag.textContent.trim().length);
     const maxLength = Math.max(...lengths);
+    const minFontSize = Math.min(window.innerWidth, window.innerHeight) * 0.05;
     
     tags.forEach(tag => {
       const length = tag.textContent.trim().length;
-      const scaleFactor = 1.5 - Math.log(length + 1) / Math.log(maxLength + 1);
+      let scaleFactor = 1.5 - Math.log(length + 1) / Math.log(maxLength + 1);
+      scaleFactor = Math.max(scaleFactor, 0.8);
       tag.dataset.size = scaleFactor.toFixed(2);
     });
   }
@@ -77,69 +79,62 @@ class TagsCloud {
     document.addEventListener('touchmove', this.#onTouchMove.bind(this), { passive: true });
   }
 
- #updatePositions() {
-  const sin = Math.sin(this.#rotationAngle);
-  const cos = Math.cos(this.#rotationAngle);
-  const ux = this.#rotationAxis[0];
-  const uy = this.#rotationAxis[1];
-  const uz = this.#rotationAxis[2];
+  #updatePositions() {
+    const sin = Math.sin(this.#rotationAngle);
+    const cos = Math.cos(this.#rotationAngle);
+    const ux = this.#rotationAxis[0];
+    const uy = this.#rotationAxis[1];
+    const uz = this.#rotationAxis[2];
 
-  const rotationMatrix = [
-    [
-      cos + ux ** 2 * (1 - cos),
-      ux * uy * (1 - cos) - uz * sin,
-      ux * uz * (1 - cos) + uy * sin,
-    ],
-    [
-      uy * ux * (1 - cos) + uz * sin,
-      cos + uy ** 2 * (1 - cos),
-      uy * uz * (1 - cos) - ux * sin,
-    ],
-    [
-      uz * ux * (1 - cos) - uy * sin,
-      uz * uy * (1 - cos) + ux * sin,
-      cos + uz ** 2 * (1 - cos),
-    ],
-  ];
+    const rotationMatrix = [
+      [
+        cos + ux ** 2 * (1 - cos),
+        ux * uy * (1 - cos) - uz * sin,
+        ux * uz * (1 - cos) + uy * sin,
+      ],
+      [
+        uy * ux * (1 - cos) + uz * sin,
+        cos + uy ** 2 * (1 - cos),
+        uy * uz * (1 - cos) - ux * sin,
+      ],
+      [
+        uz * ux * (1 - cos) - uy * sin,
+        uz * uy * (1 - cos) + ux * sin,
+        cos + uz ** 2 * (1 - cos),
+      ],
+    ];
 
-  const N = this.#tags.length;
-  const containerWidth = this.#root.offsetWidth;
-  const containerHeight = this.#root.offsetHeight;
+    const N = this.#tags.length;
+    const containerWidth = this.#root.offsetWidth;
+    const containerHeight = this.#root.offsetHeight;
 
-  for (let i = 0; i < N; i++) {
-    const [x, y, z] = this.#sphere.points[i];
-    
-    // Original transformation calculations
-    const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
-    const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
-    const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
+    for (let i = 0; i < N; i++) {
+      const [x, y, z] = this.#sphere.points[i];
+      
+      const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
+      const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
+      const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
 
-    // Original translation calculations
-    let translateX = (this.#size * transformedX) * 0.35;
-    let translateY = (this.#size * transformedY) * 0.35;
+      let translateX = (this.#size * transformedX) * 0.35;
+      let translateY = (this.#size * transformedY) * 0.35;
 
-    // New bounds checking (inserted in correct sequence)
-    const tagRect = this.#tags[i].getBoundingClientRect();
-    const maxX = (containerWidth - tagRect.width) / 2;
-    const maxY = (containerHeight - tagRect.height) / 2;
-    
-    translateX = Math.max(-maxX, Math.min(translateX, maxX));
-    translateY = Math.max(-maxY, Math.min(translateY, maxY));
+      const tagRect = this.#tags[i].getBoundingClientRect();
+      const maxX = (containerWidth - tagRect.width) / 2;
+      const maxY = (containerHeight - tagRect.height) / 2;
+      
+      translateX = Math.max(-maxX, Math.min(translateX, maxX));
+      translateY = Math.max(-maxY, Math.min(translateY, maxY));
 
-    // Original scaling and opacity calculations
-    const depthScale = (transformedZ + 2) / 3;
-    const lengthScale = parseFloat(this.#tags[i].dataset.size);
-    const combinedScale = depthScale * lengthScale;
-    const opacity = (transformedZ + 1.5) / 2.5;
+      const depthScale = (transformedZ + 2) / 3;
+      const lengthScale = parseFloat(this.#tags[i].dataset.size);
+      const combinedScale = depthScale * lengthScale;
+      const opacity = (transformedZ + 1.5) / 2.5;
 
-    // Preserve original transform construction
-    const transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
-
-    // Original style updates
-    this.#tags[i].style.transform = transform;
-    this.#tags[i].style.opacity = opacity;
+      this.#tags[i].style.transform = 
+        `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
+      this.#tags[i].style.opacity = opacity;
+    }
   }
-}
 
   #onMouseMove(e) {
     this.#autoRotate = false;
@@ -198,7 +193,6 @@ class TagsCloud {
   }
 }
 
-// Gradient Bubble Animation
 const interBubble = document.querySelector('.interactive');
 let curX = 0;
 let curY = 0;
@@ -212,7 +206,6 @@ function moveBubble() {
   requestAnimationFrame(moveBubble);
 }
 
-// Initialize Everything
 document.addEventListener('DOMContentLoaded', () => {
   const cloud = new TagsCloud(document.querySelector('.tags'));
   cloud.start();
