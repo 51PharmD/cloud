@@ -34,7 +34,7 @@ class TagsCloud {
 
   constructor(root) {
     this.#root = root;
-    this.#updateSize();
+    this.#updateSize(); // Changed from direct offsetWidth
     this.#tags = root.querySelectorAll('.tag');
     this.#sphere = new FibonacciSphere(this.#tags.length);
     this.#rotationAxis = [1, 0, 0];
@@ -43,26 +43,14 @@ class TagsCloud {
     this.#autoRotate = true;
     this.#idleTime = 0;
 
-    this.#normalizeFontSizes();
     this.#updatePositions();
     this.#initEventListeners();
     this.#root.classList.add('-loaded');
   }
 
   #updateSize() {
-    this.#size = Math.min(this.#root.offsetWidth, this.#root.offsetHeight);
-  }
-
-  #normalizeFontSizes() {
-    const tags = Array.from(this.#tags);
-    const lengths = tags.map(tag => tag.textContent.trim().length);
-    const maxLength = Math.max(...lengths);
-    
-    tags.forEach(tag => {
-      const length = tag.textContent.trim().length;
-      const scaleFactor = 1.5 - Math.log(length + 1) / Math.log(maxLength + 1);
-      tag.dataset.size = scaleFactor.toFixed(2);
-    });
+    const container = this.#root.parentElement;
+    this.#size = Math.min(container.offsetWidth, container.offsetHeight) * 0.7;
   }
 
   #initEventListeners() {
@@ -105,21 +93,29 @@ class TagsCloud {
     const N = this.#tags.length;
 
     for (let i = 0; i < N; i++) {
-      const [x, y, z] = this.#sphere.points[i];
-      
-      const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
-      const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
-      const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
+      const x = this.#sphere.points[i][0];
+      const y = this.#sphere.points[i][1];
+      const z = this.#sphere.points[i][2];
 
-      const translateX = (this.#size * transformedX) / 2;
-      const translateY = (this.#size * transformedY) / 2;
-      
-      const depthScale = (transformedZ + 2) / 3;
-      const lengthScale = parseFloat(this.#tags[i].dataset.size);
-      const combinedScale = depthScale * lengthScale;
-      
+      const transformedX =
+        rotationMatrix[0][0] * x +
+        rotationMatrix[0][1] * y +
+        rotationMatrix[0][2] * z;
+      const transformedY =
+        rotationMatrix[1][0] * x +
+        rotationMatrix[1][1] * y +
+        rotationMatrix[1][2] * z;
+      const transformedZ =
+        rotationMatrix[2][0] * x +
+        rotationMatrix[2][1] * y +
+        rotationMatrix[2][2] * z;
+
+      // Modified spread calculation
+      const translateX = (this.#size * transformedX) * 0.4;
+      const translateY = (this.#size * transformedY) * 0.4;
+      const scale = (transformedZ + 2) / 3;
+      const transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${scale})`;
       const opacity = (transformedZ + 1.5) / 2.5;
-      const transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
 
       this.#tags[i].style.transform = transform;
       this.#tags[i].style.opacity = opacity;
@@ -180,6 +176,10 @@ class TagsCloud {
 
   start() {
     this.#update();
+  }
+
+  stop() {
+    cancelAnimationFrame(this.#frameRequestId);
   }
 }
 
