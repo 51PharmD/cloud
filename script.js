@@ -215,34 +215,16 @@ function extractCloudWords(messages) {
   return cloudWords;
 }
 
-// Helper function to create a loader element with simple text
-function createLoaderElement() {
-    const loader = document.createElement('div');
-    loader.id = 'loader';
-    loader.textContent = 'Loading...';
-    // Apply styles directly to the element
-    Object.assign(loader.style, {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: '24px',
-        fontWeight: 'bold',
-        color: '#3498db'
-    });
-    return loader;
-}
-
 // Initialization code
 document.addEventListener('DOMContentLoaded', async () => {
   const tagsUl = document.querySelector('.tags');
-  const loader = createLoaderElement();
-  tagsUl.appendChild(loader); // Add loader before fetching
+  // Store existing static tags before clearing content
+  const existingTags = Array.from(tagsUl.children).map(li => li.outerHTML);
+
+  // Display "Loading..." text
+  tagsUl.innerHTML = '<div id="loadingText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: #3498db;">Loading...</div>';
 
   try {
-    // Save existing static tags
-    const existingTags = Array.from(tagsUl.children).map(li => li.outerHTML);
-
     // Your Google Apps Script Web App URL
     const webAppUrl = 'https://script.google.com/macros/s/AKfycbxeeifi8ozgTCJrJQtn56hrWfeak7823Ko7MlQV2Xe8saLQyPuSpaYzMtW5-8npmBHZqQ/exec';
     const response = await fetch(webAppUrl);
@@ -250,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cloudWords = extractCloudWords(data);
 
-    // Clear the tags container, but not the loader
+    // Clear loading text and prepare for tags
     tagsUl.innerHTML = ''; 
 
     // Add back the existing static tags
@@ -268,12 +250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       tagsUl.appendChild(li);
     });
 
-    // Now remove the loader explicitly after all content has been added
-    loader.remove();
-
     // Initialize cloud with all tags
     const cloud = new TagsCloud(tagsUl);
-    cloud.start();
+    cloud.start(); // This is where the cloud visualization begins
 
     // Interactive bubble code (unchanged)
     const interBubble = document.querySelector('.interactive');
@@ -304,10 +283,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (error) {
     console.error('Error initializing cloud:', error);
-    // Ensure the loader is removed even on error
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.remove();
-    }
+    // Ensure the loading text is removed even on error
+    tagsUl.innerHTML = ''; // Clear any loading text or partial content
+    tagsUl.textContent = 'Error loading cloud. Please try again later.'; // Optional: display error message
   }
 });
