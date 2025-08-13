@@ -57,7 +57,6 @@ class TagsCloud {
     const tags = Array.from(this.#tags);
     const lengths = tags.map(tag => tag.textContent.trim().length);
     const maxLength = Math.max(...lengths);
-    const minFontSize = Math.min(window.innerWidth, window.innerHeight) * 0.05;
     
     tags.forEach(tag => {
       const length = tag.textContent.trim().length;
@@ -193,35 +192,17 @@ class TagsCloud {
   }
 }
 
-// Google Sheets integration functions
-async function fetchHtmlContent(pubhtmlUrl) {
-  const urlWithTimestamp = `${pubhtmlUrl}?t=${new Date().getTime()}`;
-  const response = await fetch(urlWithTimestamp);
-  return await response.text();
-}
-
-function parseMessagesForCloud(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const rows = doc.querySelectorAll('table tr');
-  
-  return Array.from(rows).slice(1).map(row => {
-    const cells = row.querySelectorAll('td');
-    return {
-      message: cells[1]?.innerText.trim() || ''
-    };
-  });
-}
-
+// Function to extract cloud words from the JSON data
 function extractCloudWords(messages) {
   const cloudWords = [];
   const seenWords = new Set();
   
   messages.forEach(entry => {
-    if (entry.message.startsWith('☁') && entry.message.length > 2) {
+    // The message is now directly on the 'message' key from the JSON response
+    if (entry.message && entry.message.startsWith('☁') && entry.message.length > 2) {
       const cleanMessage = entry.message
         .replace(/^☁\s*/, '')
-        .replace(/[^\w\s\u0600-\u06FF]/gi, '')
+        .replace(/[^\w\s\u0600-\u06FF]/gi, '') // Remove non-word, non-space, non-Arabic characters
         .trim();
       
       if (cleanMessage && !seenWords.has(cleanMessage)) {
@@ -234,17 +215,30 @@ function extractCloudWords(messages) {
   return cloudWords;
 }
 
+// Helper function to create a loader element
+function createLoaderElement() {
+    const loader = document.createElement('div');
+    loader.id = 'loader';
+    loader.className = 'loader';
+    return loader;
+}
+
 // Initialization code
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Fetch data from Google Sheet
-    const pubhtmlUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQazrkD8DxsLDMhQ4X78vjlIjq1wos7C-0dge7NDG0EBkJ7jhePsJYXCGUvMV79GaNcAa1hJYS_M-5Z/pubhtml';
-    const html = await fetchHtmlContent(pubhtmlUrl);
-    const messages = parseMessagesForCloud(html);
-    const cloudWords = extractCloudWords(messages);
+  const tagsUl = document.querySelector('.tags');
+  const loader = createLoaderElement();
+  tagsUl.appendChild(loader); // Add loader before fetching
 
-    // Get the tags container
-    const tagsUl = document.querySelector('.tags');
+  try {
+    // Your Google Apps Script Web App URL
+    const webAppUrl = 'https://script.google.com/macros/s/AKfycbxeeifi8ozgTCJrJQtn56hrWfeak7823Ko7MlQV2Xe8saLQyPuSpaYzMtW5-8npmBHZqQ/exec';
+    const response = await fetch(webAppUrl);
+    const data = await response.json(); // Parse JSON directly
+
+    const cloudWords = extractCloudWords(data);
+
+    // Clear the loader and any old tags before adding new ones
+    tagsUl.innerHTML = ''; 
 
     // Add new words from Google Sheet
     cloudWords.forEach(word => {
@@ -258,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cloud = new TagsCloud(tagsUl);
     cloud.start();
 
-    // Interactive bubble code
+    // Interactive bubble code (unchanged)
     const interBubble = document.querySelector('.interactive');
     let curX = 0;
     let curY = 0;
@@ -287,5 +281,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (error) {
     console.error('Error initializing cloud:', error);
+    // Ensure the loader is removed even on error
+    if (tagsUl.contains(loader)) {
+      tagsUl.removeChild(loader);
+    }
   }
 });
