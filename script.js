@@ -215,11 +215,21 @@ function extractCloudWords(messages) {
   return cloudWords;
 }
 
-// Helper function to create a loader element
+// Helper function to create a loader element with simple text
 function createLoaderElement() {
     const loader = document.createElement('div');
     loader.id = 'loader';
-    loader.className = 'loader';
+    loader.textContent = 'Loading...';
+    // Apply styles directly to the element
+    Object.assign(loader.style, {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: '#3498db'
+    });
     return loader;
 }
 
@@ -230,6 +240,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   tagsUl.appendChild(loader); // Add loader before fetching
 
   try {
+    // Save existing static tags
+    const existingTags = Array.from(tagsUl.children).map(li => li.outerHTML);
+
     // Your Google Apps Script Web App URL
     const webAppUrl = 'https://script.google.com/macros/s/AKfycbxeeifi8ozgTCJrJQtn56hrWfeak7823Ko7MlQV2Xe8saLQyPuSpaYzMtW5-8npmBHZqQ/exec';
     const response = await fetch(webAppUrl);
@@ -240,7 +253,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear the loader and any old tags before adding new ones
     tagsUl.innerHTML = ''; 
 
-    // Add new words from Google Sheet
+    // Add back the existing static tags
+    existingTags.forEach(tagHtml => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = tagHtml;
+        tagsUl.appendChild(tempDiv.firstChild);
+    });
+
+    // Append the new words from Google Sheet
     cloudWords.forEach(word => {
       const li = document.createElement('li');
       li.className = 'tag';
@@ -282,8 +302,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Error initializing cloud:', error);
     // Ensure the loader is removed even on error
-    if (tagsUl.contains(loader)) {
-      tagsUl.removeChild(loader);
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.remove();
     }
   }
 });
