@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cloudWords = extractCloudWords(data);
 
-    // Clear the loader and any old tags before adding new ones
+    // Clear the tags container, but not the loader
     tagsUl.innerHTML = ''; 
 
     // Add back the existing static tags
@@ -267,6 +267,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       li.innerHTML = `<span class="box">${word}</span>`;
       tagsUl.appendChild(li);
     });
+
+    // Now remove the loader explicitly after all content has been added
+    loader.remove();
 
     // Initialize cloud with all tags
     const cloud = new TagsCloud(tagsUl);
