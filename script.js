@@ -228,7 +228,7 @@ function createLoaderElement() {
         transform: 'translate(-50%, -50%)',
         fontSize: '24px',
         fontWeight: 'bold',
-        color: '#3498db',
+        color: '#000000',
         zIndex: '9999'
     });
     return loader;
