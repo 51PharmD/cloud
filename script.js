@@ -57,7 +57,7 @@ class TagsCloud {
     const tags = Array.from(this.#tags);
     const lengths = tags.map(tag => tag.textContent.trim().length);
     const maxLength = Math.max(...lengths);
-    
+
     tags.forEach(tag => {
       const length = tag.textContent.trim().length;
       let scaleFactor = 1.5 - Math.log(length + 1) / Math.log(maxLength + 1);
@@ -71,7 +71,7 @@ class TagsCloud {
       this.#updateSize();
       this.#updatePositions();
     };
-    
+
     window.addEventListener('resize', resizeHandler);
     window.addEventListener('orientationchange', resizeHandler);
     document.addEventListener('mousemove', this.#onMouseMove.bind(this));
@@ -109,7 +109,7 @@ class TagsCloud {
 
     for (let i = 0; i < N; i++) {
       const [x, y, z] = this.#sphere.points[i];
-      
+
       const transformedX = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
       const transformedY = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
       const transformedZ = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
@@ -120,7 +120,7 @@ class TagsCloud {
       const tagRect = this.#tags[i].getBoundingClientRect();
       const maxX = (containerWidth - tagRect.width) / 2;
       const maxY = (containerHeight - tagRect.height) / 2;
-      
+
       translateX = Math.max(-maxX, Math.min(translateX, maxX));
       translateY = Math.max(-maxY, Math.min(translateY, maxY));
 
@@ -129,7 +129,7 @@ class TagsCloud {
       const combinedScale = depthScale * lengthScale;
       const opacity = (transformedZ + 1.5) / 2.5;
 
-      this.#tags[i].style.transform = 
+      this.#tags[i].style.transform =
         `translateX(${translateX}px) translateY(${translateY}px) scale(${combinedScale})`;
       this.#tags[i].style.opacity = opacity;
     }
@@ -138,7 +138,7 @@ class TagsCloud {
   #onMouseMove(e) {
     this.#autoRotate = false;
     this.#idleTime = 0;
-    
+
     const rootRect = this.#root.getBoundingClientRect();
     const deltaX = e.clientX - (rootRect.left + this.#root.offsetWidth / 2);
     const deltaY = e.clientY - (rootRect.top + this.#root.offsetHeight / 2);
@@ -154,7 +154,7 @@ class TagsCloud {
   #onTouchMove(e) {
     this.#autoRotate = false;
     this.#idleTime = 0;
-    
+
     const touch = e.touches[0];
     const rootRect = this.#root.getBoundingClientRect();
     const deltaX = touch.clientX - (rootRect.left + this.#root.offsetWidth / 2);
@@ -170,7 +170,7 @@ class TagsCloud {
 
   #update() {
     this.#rotationAngle += this.#rotationSpeed;
-    
+
     if (this.#autoRotate) {
       this.#idleTime += 0.016;
       if (this.#idleTime > 2) {
@@ -196,7 +196,7 @@ class TagsCloud {
 function extractCloudWords(messages) {
   const cloudWords = [];
   const seenWords = new Set();
-  
+
   messages.forEach(entry => {
     // The message is now directly on the 'message' key from the JSON response
     if (entry.message && entry.message.startsWith('☁') && entry.message.length > 2) {
@@ -204,14 +204,14 @@ function extractCloudWords(messages) {
         .replace(/^☁\s*/, '')
         .replace(/[^\w\s\u0600-\u06FF]/gi, '') // Remove non-word, non-space, non-Arabic characters
         .trim();
-      
+
       if (cleanMessage && !seenWords.has(cleanMessage)) {
         cloudWords.push(cleanMessage);
         seenWords.add(cleanMessage);
       }
     }
   });
-  
+
   return cloudWords;
 }
 
@@ -232,8 +232,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cloudWords = extractCloudWords(data);
 
-    // Clear loading text and prepare for tags
-    tagsUl.innerHTML = ''; 
+    // Clear the loading text from the container
+    tagsUl.innerHTML = '';
 
     // Add back the existing static tags
     existingTags.forEach(tagHtml => {
@@ -249,6 +249,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       li.innerHTML = `<span class="box">${word}</span>`;
       tagsUl.appendChild(li);
     });
+
+    // Remove the loading text explicitly
+    document.getElementById('loadingText')?.remove();
 
     // Initialize cloud with all tags
     const cloud = new TagsCloud(tagsUl);
@@ -284,7 +287,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Error initializing cloud:', error);
     // Ensure the loading text is removed even on error
-    tagsUl.innerHTML = ''; // Clear any loading text or partial content
+    const loadingText = document.getElementById('loadingText');
+    if (loadingText) {
+      loadingText.remove();
+    }
     tagsUl.textContent = 'Error loading cloud. Please try again later.'; // Optional: display error message
   }
 });
