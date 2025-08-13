@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const existingTags = Array.from(tagsUl.children).map(li => li.outerHTML);
 
   // Display "Loading..." text
-  tagsUl.innerHTML = '<div id="loadingText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: #3498db;">Loading...</div>';
+  tagsUl.innerHTML = '<div id="loadingText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: #3498db; z-index: 9999;">Loading...</div>';
 
   try {
     // Your Google Apps Script Web App URL
